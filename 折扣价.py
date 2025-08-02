@@ -2,13 +2,13 @@ import os
 import sqlite3
 
 # 设置根目录路径（替换成你自己的路径）
-base_dir = r"C:\Users\Mayn\Desktop\情趣"
+base_dir = r"D:\火车采集器V10.28\Data"
 
-# 遍历文件夹 200 到 400
+# 遍历文件夹 236 到 237
 for folder in os.listdir(base_dir):
     if folder.isdigit():
         folder_num = int(folder)
-        if 200 <= folder_num <= 400:
+        if 449 <= folder_num <= 491:
             folder_path = os.path.join(base_dir, folder)
             db_path = os.path.join(folder_path, "SpiderResult.db3")
 
@@ -23,7 +23,7 @@ for folder in os.listdir(base_dir):
                         # 将 折扣价 更新为 销售价 × 0.35（转换为数字再计算）
                         cursor.execute("""
                             UPDATE Content
-                            SET 折扣价 = printf('%.2f', CAST(销售价 AS REAL) * 0.35)
+                            SET 折扣价 = printf('%.2f', CAST(销售价 AS REAL) * 0.3)
                             WHERE 销售价 GLOB '[0-9]*';  -- 只处理纯数字价格
                         """)
                         conn.commit()
