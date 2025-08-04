@@ -337,13 +337,13 @@ def main():
     convert_db_to_csv()
     print()
     
-    # 2. 读取CSV文件（使用第一个找到的CSV文件）
+    # 2. 读取CSV文件（处理所有找到的CSV文件）
     print("2. 读取CSV文件...")
     
-    # 查找指定范围内的第一个CSV文件
+    # 查找指定范围内的所有CSV文件
     start_folder = 449
     end_folder = 491
-    csv_found = False
+    csv_files = []
     
     for root, dirs, files in os.walk(base_path):
         if 'Content.csv' in files:
@@ -352,78 +352,89 @@ def main():
                 folder_num = int(current_folder)
                 if start_folder <= folder_num <= end_folder:
                     csv_path = os.path.join(root, 'Content.csv')
-                    df, csv_path = read_csv_file(root, 'Content.csv')
-                    csv_found = True
-                    break
+                    csv_files.append(csv_path)
+                    print(f"找到CSV文件：{csv_path}")
             except ValueError:
                 continue
     
-    if not csv_found:
+    if not csv_files:
         print("错误：在指定范围内未找到Content.csv文件")
         return
+    
+    print(f"找到 {len(csv_files)} 个Content.csv文件")
     print()
     
-    # 3. 分类字段格式化
-    print("3. 执行分类字段格式化...")
-    if '分类' in df.columns:
-        df = format_category_field(df, '分类')
-        print("分类字段格式化完成")
-    else:
-        print("分类字段不存在，跳过")
-    print()
+    # 3. 处理每个CSV文件
+    for i, csv_path in enumerate(csv_files, 1):
+        print(f"\n=== 处理第 {i}/{len(csv_files)} 个CSV文件：{csv_path} ===")
+        
+        # 读取CSV文件
+        df, csv_path = read_csv_file(os.path.dirname(csv_path), 'Content.csv')
+        if df is None:
+            print(f"跳过文件：{csv_path}")
+            continue
+        
+        # 3. 分类字段格式化
+        print("3. 执行分类字段格式化...")
+        if '分类' in df.columns:
+            df = format_category_field(df, '分类')
+            print("分类字段格式化完成")
+        else:
+            print("分类字段不存在，跳过")
+        print()
+        
+        # 4. 标题转名称
+        print("4. 执行标题转名称...")
+        if '标题' in df.columns:
+            df = convert_title_to_name(df, '标题', '名称')
+            print("标题转名称完成")
+        else:
+            print("标题字段不存在，跳过")
+        print()
+        
+        # 5. 图片链接转换
+        print("5. 执行图片链接转换...")
+        if '图片' in df.columns:
+            df = convert_image_urls(df, '图片')
+            print("图片链接转换完成")
+        else:
+            print("图片字段不存在，跳过")
+        print()
+        
+        # 6. 颜色属性转换
+        print("6. 执行颜色属性转换...")
+        if '颜色' in df.columns:
+            df = convert_color_attributes(df, '颜色')
+            print("颜色属性转换完成")
+        else:
+            print("颜色字段不存在，跳过")
+        print()
+        
+        # 7. 规格属性转换
+        print("7. 执行规格属性转换...")
+        if '规格' in df.columns:
+            df = convert_size_attributes(df, '规格')
+            print("规格属性转换完成")
+        else:
+            print("规格字段不存在，跳过")
+        print()
+        
+        # 8. 价格字段转换
+        print("8. 执行价格字段转换...")
+        if '销售价' in df.columns or '折扣价' in df.columns:
+            df = convert_price_fields(df)
+            print("价格字段转换完成")
+        else:
+            print("价格字段不存在，跳过")
+        print()
+        
+        # 9. 保存文件
+        print("9. 保存处理后的文件...")
+        folder_path = os.path.dirname(csv_path)
+        save_csv_file(df, csv_path, folder_path, csv_name, f"第{i}个文件的所有数据处理")
+        print()
     
-    # 4. 标题转名称
-    print("4. 执行标题转名称...")
-    if '标题' in df.columns:
-        df = convert_title_to_name(df, '标题', '名称')
-        print("标题转名称完成")
-    else:
-        print("标题字段不存在，跳过")
-    print()
-    
-    # 5. 图片链接转换
-    print("5. 执行图片链接转换...")
-    if '图片' in df.columns:
-        df = convert_image_urls(df, '图片')
-        print("图片链接转换完成")
-    else:
-        print("图片字段不存在，跳过")
-    print()
-    
-    # 6. 颜色属性转换
-    print("6. 执行颜色属性转换...")
-    if '颜色' in df.columns:
-        df = convert_color_attributes(df, '颜色')
-        print("颜色属性转换完成")
-    else:
-        print("颜色字段不存在，跳过")
-    print()
-    
-    # 7. 规格属性转换
-    print("7. 执行规格属性转换...")
-    if '规格' in df.columns:
-        df = convert_size_attributes(df, '规格')
-        print("规格属性转换完成")
-    else:
-        print("规格字段不存在，跳过")
-    print()
-    
-    # 8. 价格字段转换
-    print("8. 执行价格字段转换...")
-    if '销售价' in df.columns or '折扣价' in df.columns:
-        df = convert_price_fields(df)
-        print("价格字段转换完成")
-    else:
-        print("价格字段不存在，跳过")
-    print()
-    
-    # 9. 保存文件
-    print("9. 保存处理后的文件...")
-    folder_path = os.path.dirname(csv_path)
-    save_csv_file(df, csv_path, folder_path, csv_name, "所有数据处理")
-    print()
-    
-    print("=== 所有处理完成 ===")
+    print("=== 所有CSV文件处理完成 ===")
 
 if __name__ == "__main__":
     main() 
