@@ -16,14 +16,14 @@ from pathlib import Path
 BASE_FOLDER = r"D:\火车采集器V10.28\Data"  # 当前文件夹，可以改为 "D:\\我的数据" 等
 
 # 分类文件路径
-CATEGORIES_FILE = r"D:\project\us.lounge\分类\output.txt"
+CATEGORIES_FILE = r"D:\project\reef\分类\分类.txt"
 
 # 数据库文件名
 DB_FILENAME = "SpiderResult.db3"
 
 # 处理范围设置
-START_FOLDER = 517    # 起始文件夹编号，设为 None 表示从第一个开始
-END_FOLDER = 606     # 结束文件夹编号，设为 None 表示到最后一个结束
+START_FOLDER = 1642    # 起始文件夹编号，设为 None 表示从第一个开始
+END_FOLDER = 1710   # 结束文件夹编号，设为 None 表示到最后一个结束
 
 # 是否仅预览（不实际更新数据库）
 PREVIEW_ONLY = False  # True=仅预览，False=实际执行更新
