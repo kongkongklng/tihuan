@@ -6,8 +6,8 @@ import shutil
 base_dir = r"D:\火车采集器V10.28\Data"  # <<< 替换为你的路径 
  
 # 设置文件夹数字范围（含） 
-start_num = 1642 
-end_num = 1710 
+start_num = 1711
+end_num = 1892
  
 # 遍历文件夹 
 for folder_name in os.listdir(base_dir): 

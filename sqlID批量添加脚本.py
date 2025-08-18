@@ -6,10 +6,10 @@ import re
 
 # ================ 固定配置（按需修改）================
 DB_PATH: str = r"D:\火车采集器V10.28\Configuration\config.db3"
-START_JOB_ID: int = 1711
-END_JOB_ID: int = 1892
-CATEGORY_FILE: str = r"D:\project\buildabear\分类\分类路径.txt"   # 每行一个分类/任务名
-LINKS_DIR: str = r"D:\project\buildabear\链接"  # 目录内放置txt（当 START_ADDRESS_USE_CATEGORY=False 时使用）
+START_JOB_ID: int = 1893
+END_JOB_ID: int = 2094
+CATEGORY_FILE: str = r"D:\project\adameve\分类\分类.txt"   # 每行一个分类/任务名
+LINKS_DIR: str = r"D:\project\adameve\链接"  # 目录内放置txt（当 START_ADDRESS_USE_CATEGORY=False 时使用）
 USE_FILE_PREFIX: bool = True      # 是否在路径前加 #FILE#（当 START_ADDRESS_USE_CATEGORY=False 时生效）
 START_ADDRESS_USE_CATEGORY: bool = False  # True: <StartAddress> 使用分类名；False: 使用 txt 绝对路径
 DRY_RUN: bool = False              # 预览/不落库

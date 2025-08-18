@@ -22,8 +22,8 @@ BASE_FOLDER = "D:\\火车采集器V10.28\\Data"
 DB_FILENAME = "SpiderResult.db3"
 
 # 处理范围设置
-START_FOLDER = 1642    # 起始文件夹编号，设为 None 表示从第一个开始
-END_FOLDER = 1710     # 结束文件夹编号，设为 None 表示到最后一个结束
+START_FOLDER = 1711    # 起始文件夹编号，设为 None 表示从第一个开始
+END_FOLDER = 1892     # 结束文件夹编号，设为 None 表示到最后一个结束
 
 # 是否仅预览（不实际更新数据库）
 PREVIEW_ONLY = False  # True=仅预览，False=实际执行更新

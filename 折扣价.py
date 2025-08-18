@@ -8,7 +8,7 @@ base_dir = r"D:\火车采集器V10.28\Data"
 for folder in os.listdir(base_dir):
     if folder.isdigit():
         folder_num = int(folder)
-        if 1642 <= folder_num <= 1710:
+        if 1711 <= folder_num <= 1892:
             folder_path = os.path.join(base_dir, folder)
             db_path = os.path.join(folder_path, "SpiderResult.db3")
 
