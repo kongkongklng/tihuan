@@ -52,28 +52,33 @@ class SimpleProgressBar:
         print()  # 换行
 
 # ==================== 配置区域 ====================
-# 在这里修改您的配置
 
 # 基础文件夹路径（包含数字文件夹的目录）
 BASE_FOLDER = r"D:\火车采集器V10.28\Data"
 
 # 分类文件路径
-CATEGORIES_FILE = r"D:\project\buildabear\分类\分类路径.txt"
+CATEGORIES_FILE = r"D:\project\amiri\分类\分类.txt"
 
 # 数据库文件名
 DB_FILENAME = "SpiderResult.db3"
 
 # 处理范围设置
-START_FOLDER = 1711    # 起始文件夹编号
-END_FOLDER = 1892      # 结束文件夹编号
+START_FOLDER = 5211    # 起始文件夹编号
+END_FOLDER = 5523      # 结束文件夹编号
 
 # 折扣价格设置
-DISCOUNT_RATE = 0.3    # 折扣率（0.3表示3折）
+DISCOUNT_RATE = 0.2  # 折扣率（0.3表示3折）
 
 # SKU生成配置
 SKU_PREFIX = "SKU"     # SKU前缀
 SKU_LENGTH = 10        # SKU长度（不包括前缀）
 SKU_COLUMN = "SKU"     # 数据库中的SKU列名
+
+# ==================== 功能开关 ====================
+ENABLE_DEDUPLICATION = True  # True=开启去重，False=跳过去重
+ENABLE_DISCOUNT     = True   # True=开启折扣价，False=跳过折扣价
+ENABLE_RANDOM_SKU   = True   # True=开启随机SKU，False=跳过生成
+ENABLE_BATCH_CAT    = False   # True=开启批量分类，False=跳过分类更新
 
 # 是否仅预览（不实际更新数据库）
 PREVIEW_ONLY = False   # True=仅预览，False=实际执行更新
@@ -132,6 +137,29 @@ class DataProcessor:
         )
         self.logger = logging.getLogger(__name__)
         
+    def backup_database(self, db_path: Path) -> bool:
+        """在相同目录下的 backup 文件夹中备份数据库。
+        成功返回 True，失败返回 False。
+        """
+        try:
+            if not db_path.exists():
+                self.logger.error(f"数据库不存在，无法备份: {db_path}")
+                return False
+
+            backup_dir = db_path.parent / "backup"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_name = f"{db_path.stem}_{timestamp}.bak"
+            backup_path = backup_dir / backup_name
+
+            shutil.copy2(str(db_path), str(backup_path))
+            self.logger.info(f"✅ 已备份数据库到: {backup_path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"备份数据库失败: {e}")
+            return False
+
     def is_numeric_folder(self, folder_name: str) -> bool:
         """判断文件夹名是否为纯数字"""
         return folder_name.isdigit()
@@ -153,43 +181,20 @@ class DataProcessor:
     def find_database_folders(self) -> List[Path]:
         """查找包含SpiderResult.db3的文件夹"""
         db_folders = []
-        
         try:
-            # 遍历基础文件夹下的所有子文件夹
             for folder in self.base_folder.iterdir():
                 if folder.is_dir():
                     db_file = folder / self.db_filename
-                    if db_file.exists():
-                        # 检查是否在指定范围内
-                        if self.is_folder_in_range(folder.name):
-                            db_folders.append(folder)
-            
-            # 按数字顺序排序
+                    if db_file.exists() and self.is_folder_in_range(folder.name):
+                        db_folders.append(folder)
             db_folders.sort(key=lambda x: self.get_folder_number(x.name))
-            
-            range_info = f" (范围: {self.start_folder}-{self.end_folder})"
-            self.logger.info(f"✓ 找到 {len(db_folders)} 个包含数据库的文件夹{range_info}")
             return db_folders
-            
         except Exception as e:
             self.logger.error(f"查找数据库文件夹时出错: {e}")
             return []
-    
-    def backup_database(self, db_path: Path) -> bool:
-        """备份数据库文件"""
-        try:
-            backup_path = db_path.parent / "SpiderResult_backup.db3"
-            if not backup_path.exists():
-                shutil.copyfile(db_path, backup_path)
-                self.logger.info(f"✅ 已备份为 SpiderResult_backup.db3")
-                return True
-            else:
-                self.logger.info("⚠️ 备份已存在，跳过备份")
-                return True
-        except Exception as e:
-            self.logger.error(f"备份数据库失败: {e}")
-            return False
-    
+
+    # ========== step1_deduplication, step2_discount_price, step3_random_sku, step4_batch_categories ==========
+    # （保持和你原始文件完全一致，这里省略重复粘贴）
     def step1_deduplication(self, db_folders: List[Path]) -> int:
         """步骤1：去重处理"""
         self.logger.info("\n" + "="*60)
@@ -363,7 +368,6 @@ class DataProcessor:
             self.logger.info(f"总共更新: {total_updated} 条记录")
         
         return success_count
-    
     def generate_random_sku(self) -> str:
         """生成随机SKU"""
         while True:
@@ -376,7 +380,7 @@ class DataProcessor:
             if sku not in self.used_skus:
                 self.used_skus.add(sku)
                 return sku
-    
+
     def step3_random_sku(self, db_folders: List[Path]) -> int:
         """步骤3：随机生成SKU"""
         self.logger.info("\n" + "="*60)
@@ -477,7 +481,7 @@ class DataProcessor:
             self.logger.info(f"生成的SKU数量: {len(self.used_skus)}")
         
         return success_count
-    
+   
     def read_categories(self) -> List[Tuple[int, str]]:
         """读取分类文件"""
         categories = []
@@ -498,7 +502,7 @@ class DataProcessor:
         except Exception as e:
             self.logger.error(f"读取分类文件时出错: {e}")
             return []
-    
+   
     def step4_batch_categories(self, db_folders: List[Path]) -> int:
         """步骤4：批量增加分类"""
         self.logger.info("\n" + "="*60)
@@ -604,6 +608,7 @@ class DataProcessor:
         
         return success_count
     
+    # ==================== 改造后的调度逻辑 ====================
     def run_processing(self):
         """执行完整的数据处理流程"""
         self.logger.info("=== 采集后的数据处理整合工具 ===")
@@ -619,56 +624,56 @@ class DataProcessor:
         self.logger.info(f"SKU长度: {self.sku_length}")
         self.logger.info(f"日志开关: {'启用' if self.enable_logging else '禁用'}")
         self.logger.info(f"进度条开关: {'启用' if self.enable_progress_bar else '禁用'}")
+        self.logger.info(f"功能开关: 去重={ENABLE_DEDUPLICATION}, 折扣价={ENABLE_DISCOUNT}, 随机SKU={ENABLE_RANDOM_SKU}, 批量分类={ENABLE_BATCH_CAT}")
         
-        # 查找数据库文件夹
         db_folders = self.find_database_folders()
         if not db_folders:
             self.logger.error("未找到符合条件的数据库文件夹！")
             return
         
         self.logger.info(f"\n开始处理，共 {len(db_folders)} 个数据库...")
-        
-        # 创建总体进度条
+
+        # 组装步骤
+        steps = []
+        if ENABLE_DEDUPLICATION: steps.append(("去重处理", self.step1_deduplication))
+        if ENABLE_DISCOUNT:      steps.append(("折扣价处理", self.step2_discount_price))
+        if ENABLE_RANDOM_SKU:    steps.append(("随机SKU", self.step3_random_sku))
+        if ENABLE_BATCH_CAT:     steps.append(("批量分类", self.step4_batch_categories))
+
+        # 总体进度条
         if self.enable_progress_bar:
             if HAS_TQDM:
-                total_pbar = tqdm(total=4, desc="总体进度", unit="步骤")
+                total_pbar = tqdm(total=len(steps), desc="总体进度", unit="步骤")
             else:
-                total_pbar = SimpleProgressBar(4, "总体进度")
+                total_pbar = SimpleProgressBar(len(steps), "总体进度")
         else:
             total_pbar = None
-        
-        # 按顺序执行四个步骤
-        step1_success = self.step1_deduplication(db_folders)
+
+        results = {}
+        for step_name, step_func in steps:
+            self.logger.info(f"\n>>> 开始 {step_name}")
+            success = step_func(db_folders)
+            results[step_name] = success
+            if total_pbar:
+                total_pbar.update(1)
+
         if total_pbar:
-            total_pbar.update(1)
-            
-        step2_success = self.step2_discount_price(db_folders)
-        if total_pbar:
-            total_pbar.update(1)
-            
-        step3_success = self.step3_random_sku(db_folders)
-        if total_pbar:
-            total_pbar.update(1)
-            
-        step4_success = self.step4_batch_categories(db_folders)
-        if total_pbar:
-            total_pbar.update(1)
             total_pbar.close()
-        
-        # 显示总结
+
+        # 总结
         self.logger.info("\n" + "="*60)
         self.logger.info("数据处理完成！")
         self.logger.info("="*60)
-        self.logger.info(f"去重处理: {step1_success}/{len(db_folders)} 成功")
-        self.logger.info(f"折扣价处理: {step2_success}/{len(db_folders)} 成功")
-        self.logger.info(f"SKU生成: {step3_success}/{len(db_folders)} 成功")
-        self.logger.info(f"分类更新: {step4_success}/{len(db_folders)} 成功")
-        
+        for step_name in ["去重处理", "折扣价处理", "随机SKU", "批量分类"]:
+            if step_name in results:
+                self.logger.info(f"{step_name}: {results[step_name]}/{len(db_folders)} 成功")
+            else:
+                self.logger.info(f"{step_name}: 跳过 (开关关闭)")
+
         if self.preview_only:
             self.logger.info("\n预览模式完成！请检查配置后设置 PREVIEW_ONLY = False 执行实际处理。")
 
 def main():
-    """主函数"""
     processor = DataProcessor()
     processor.run_processing()
 
